@@ -28,7 +28,8 @@ static const Rule rules[] = {
 	 */
 	/* class      instance    title       tags mask     isfloating   monitor */
 	{ "Gimp",     NULL,       NULL,       0,            1,           -1 },
-	{ "Firefox",  NULL,       NULL,       1 << 8,       0,           -1 },
+        { "Bitwarden", NULL,      NULL,       1 << 8,            1,           -1 },
+	{ "Firefox",  NULL,       NULL,       2,            0,           -1 },
 };
 
 /* layout(s) */
@@ -59,13 +60,18 @@ static char dmenumon[2] = "0"; /* component of dmenucmd, manipulated in spawn() 
 static const char *dmenucmd[] = { "dmenu_run", "-m", dmenumon, "-fn", dmenufont, "-nb", col_gray1, "-nf", col_gray3, "-sb", col_cyan, "-sf", col_gray4, NULL };
 static const char *termcmd[]  = { "xterm", NULL };
 static const char scratchpadname[] = "scratchpad";
+static const char *passwordscmd[] = { "bitwarden", NULL };
 static const char *scratchpadcmd[] = { "xterm", "-title", scratchpadname, "-geometry", "120x34", NULL };
+static const char *mutecmd[]       = { "amixer", "-q", "set", "Master", "toggle", NULL };
+static const char *volupcmd[]      = { "amixer", "-q", "set", "Master", "5%+", "unmute", NULL };
+static const char *voldowncmd[]    = { "amixer", "-q", "set", "Master", "5%-", "unmute", NULL };
 
 static Key keys[] = {
 	/* modifier                     key        function        argument */
 	{ MODKEY,                       XK_p,      spawn,          {.v = dmenucmd } },
 	{ MODKEY|ShiftMask,             XK_Return, spawn,          {.v = termcmd } },
 	{ MODKEY,                       XK_grave,  togglescratch,  {.v = scratchpadcmd } },
+	{ MODKEY,	         	XK_v,      spawn,          {.v = passwordscmd } },
 	{ MODKEY,                       XK_b,      togglebar,      {0} },
 	{ MODKEY,                       XK_j,      focusstack,     {.i = +1 } },
 	{ MODKEY,                       XK_k,      focusstack,     {.i = -1 } },
@@ -97,6 +103,9 @@ static Key keys[] = {
 	TAGKEYS(                        XK_8,                      7)
 	TAGKEYS(                        XK_9,                      8)
 	{ MODKEY|ShiftMask,             XK_q,      quit,           {0} },
+	{ 0, 0x1008ff11, spawn, {.v = voldowncmd } },
+	{ 0, 0x1008ff13, spawn, {.v = volupcmd } },
+        { 0, 0x1008ff12, spawn, {.v = mutecmd } },
 };
 
 /* button definitions */
