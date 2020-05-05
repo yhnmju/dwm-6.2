@@ -1,0 +1,98 @@
+#!/usr/bin/env perl
+#
+# I had originally intended to write this in shell,
+# but shell doesn't handle floating point numbers very 
+# well and xrandr monitor brightness is returned as
+# a floating point number.
+#
+use warnings;
+use strict;
+use File::Basename;
+
+our $STEP=0.1;
+our $LOWER=0.1;
+our $UPPER=1.0;
+
+our $me = basename($0);
+our $tmpfile = "/tmp/monitorBrightness";
+
+sub get_connected_monitor
+{
+	my (@cmd, @output);
+	# You can get the connected monitor from the xrandr output.
+	#
+	# Run xrandr and parse the output and put it in a file to cache the result for next time
+	# if the tmp file exists, that means we've already parsed the xrandr output before.
+	# Just grab the monitor from the file in /tmp.
+	my $Monitor = "";
+	if (-e $tmpfile) {
+		open(my $fh, $tmpfile) or die "$tmpfile: $!";
+		@output = <$fh>;
+		close $fh;
+		$Monitor = $output[0];
+		chomp($Monitor);
+	}
+	# otherwise, we'll need to just get the output and place in tmpfile. Cache the output for next time
+	# This assumes that you only want to change the brightness on one monitor
+	else {
+		@cmd = `xrandr` || die "unable to run xrandr";
+		foreach my $l (@cmd) {
+			if($l =~ m/(.+) connected/) {
+				$Monitor = $1;
+				write_monitor_tofile($Monitor);
+				last;
+			}
+		}
+	}
+	return $Monitor;
+}
+
+sub write_monitor_tofile() {
+	my ($data) = @_;
+	my $fh;
+	open ($fh, '>', $tmpfile) or die $!;
+	print $fh $data or die $!;
+	close $fh;
+}
+
+sub get_current_brightness
+{
+	my @cmd = `xrandr --verbose`;
+	foreach my $l (@cmd) {
+		if($l =~ m/Brightness: ([\w\.]+)/) {
+			return $1;
+		}
+	}
+	die "get_current_brightness: unable to get current brightness\n";
+}
+
+sub update_brightness
+{
+	my ($monitor, $bright) = @_;
+	system("xrandr --output $monitor --brightness $bright") == 0 or die "unable to update screen brightness";
+}
+
+sub change
+{
+	my $bright = get_current_brightness();
+	my $desired;
+	if ($me eq "brighter") {
+		$desired = $bright + $STEP;
+	}
+	elsif ($me eq "dimmer") {
+		$desired = $bright - $STEP;
+	}
+
+	# Just some simple bounds checking so that you don't
+	# drive the brightness on the montior too low
+	# or too high.
+	if ($desired >= $LOWER and $desired <= $UPPER) {
+		my $monitor = get_connected_monitor();
+		$monitor eq "" && die "$0: unable to find connected montior\n";
+		update_brightness($monitor, $desired);
+	}
+}
+
+if($me eq 'brighter' || $me eq 'dimmer') {
+	change();
+}

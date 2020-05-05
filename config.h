@@ -18,6 +18,12 @@ static const char *colors[][3]      = {
 	[SchemeSel]  = { col_gray4, col_cyan,  col_cyan  },
 };
 
+#define XF86AudioRaiseVolume	0x1008ff13
+#define XF86AudioLowerVolume    0x1008ff11
+#define XF86AudioMute           0x1008ff12
+#define XF86MonBrightnessUp     0x1008ff02
+#define XF86MonBrightnessDown   0x1008ff03
+
 /* tagging */
 static const char *tags[] = { "1", "2", "3", "4", "5", "6", "7", "8", "9" };
 
@@ -28,7 +34,7 @@ static const Rule rules[] = {
 	 */
 	/* class      instance    title       tags mask     isfloating   monitor */
 	{ "Gimp",     NULL,       NULL,       0,            1,           -1 },
-        { "Bitwarden", NULL,      NULL,       1 << 8,            1,           -1 },
+        { "Bitwarden", NULL,      NULL,       1 << 8,       1,           -1 },
 	{ "Firefox",  NULL,       NULL,       2,            0,           -1 },
 };
 
@@ -65,6 +71,8 @@ static const char *scratchpadcmd[] = { "xterm", "-title", scratchpadname, "-geom
 static const char *mutecmd[]       = { "amixer", "-q", "set", "Master", "toggle", NULL };
 static const char *volupcmd[]      = { "amixer", "-q", "set", "Master", "5%+", "unmute", NULL };
 static const char *voldowncmd[]    = { "amixer", "-q", "set", "Master", "5%-", "unmute", NULL };
+static const char *displaybrightup[]  = { "brighter", NULL };
+static const char *displaybrightdown[]  = { "dimmer", NULL };
 
 static Key keys[] = {
 	/* modifier                     key        function        argument */
@@ -103,9 +111,12 @@ static Key keys[] = {
 	TAGKEYS(                        XK_8,                      7)
 	TAGKEYS(                        XK_9,                      8)
 	{ MODKEY|ShiftMask,             XK_q,      quit,           {0} },
-	{ 0, 0x1008ff11, spawn, {.v = voldowncmd } },
-	{ 0, 0x1008ff13, spawn, {.v = volupcmd } },
-        { 0, 0x1008ff12, spawn, {.v = mutecmd } },
+	{ 0, XF86AudioLowerVolume, spawn, {.v = voldowncmd } },
+        { 0, XF86AudioRaiseVolume, spawn, {.v = volupcmd } },
+        { 0, XF86AudioMute, spawn, {.v = mutecmd } },
+        { 0, XF86MonBrightnessDown, spawn, {.v = displaybrightdown } },
+	{ 0, XF86MonBrightnessUp, spawn, {.v = displaybrightup } },
+
 };
 
 /* button definitions */
